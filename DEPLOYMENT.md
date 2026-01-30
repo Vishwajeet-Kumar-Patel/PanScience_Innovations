@@ -327,7 +327,7 @@ ENVIRONMENT=production
 DEBUG=false
 
 # MongoDB
-MONGODB_URL=mongodb+srv://user:pass@cluster.mongodb.net/panscience?retryWrites=true&w=majority
+MONGODB_URL=<your-mongodb-connection-string>
 DATABASE_NAME=panscience
 
 # Security
@@ -336,8 +336,8 @@ JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
 
 # AI Services
-OPENAI_API_KEY=sk-proj-xxxxx
-DEEPGRAM_API_KEY=xxxxx
+OPENAI_API_KEY=<your-openai-api-key>
+DEEPGRAM_API_KEY=<your-deepgram-api-key>
 
 # Storage
 UPLOAD_DIR=/app/uploads

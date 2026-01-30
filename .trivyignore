@@ -1,0 +1,7 @@
+# Trivy ignore file
+# Ignore documentation and example files
+DEPLOYMENT.md
+README.md
+*.md
+.env.example
+LICENSE
