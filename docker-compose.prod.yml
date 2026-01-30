@@ -2,28 +2,28 @@ version: '3.8'
 
 services:
   # =============================================
-  # Backend API Service (FastAPI + Python)
+  # Backend API Service (Production)
   # =============================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: panscience-backend
-    restart: unless-stopped
+      args:
+        - BUILD_ENV=production
+    container_name: panscience-backend-prod
+    restart: always
     ports:
       - "8000:8000"
     env_file:
       - ./backend/.env
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=production
+      - DEBUG=false
       - UPLOAD_DIR=/app/uploads
       - PYTHONUNBUFFERED=1
     volumes:
-      # Bind mount for development (hot reload)
-      - ./backend:/app
-      # Named volume for persistent uploads
+      # Only mount data volumes, not source code
       - uploads_data:/app/uploads
-      # Named volume for FAISS index
       - faiss_data:/app/faiss_index
     networks:
       - panscience-network
@@ -31,59 +31,69 @@ services:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 40s
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      retries: 5
+      start_period: 60s
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
 
   # =============================================
-  # Frontend Service (React + Vite)
+  # Frontend Service (Production)
   # =============================================
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-    container_name: panscience-frontend
-    restart: unless-stopped
+      dockerfile: Dockerfile.prod
+      args:
+        - NODE_ENV=production
+    container_name: panscience-frontend-prod
+    restart: always
     ports:
-      - "5173:5173"
+      - "80:80"
+      - "443:443"
     environment:
-      - VITE_API_BASE_URL=http://localhost:8000
-      - NODE_ENV=development
-    volumes:
-      # Bind mount for development (hot reload)
-      - ./frontend:/app
-      # Anonymous volume to prevent node_modules overwrite
-      - /app/node_modules
+      - VITE_API_BASE_URL=https://api.panscience.com
     depends_on:
       backend:
         condition: service_healthy
     networks:
       - panscience-network
-    command: npm run dev -- --host 0.0.0.0
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
+        max-size: "20m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
 # =============================================
 # Named Volumes (Persistent Storage)
 # =============================================
 volumes:
-  # Store uploaded PDF, audio, video files
   uploads_data:
     driver: local
-    name: panscience_uploads
+    name: panscience_uploads_prod
 
-  # Store FAISS vector index
   faiss_data:
     driver: local
-    name: panscience_faiss
+    name: panscience_faiss_prod
 
 # =============================================
 # Networks
@@ -91,4 +101,4 @@ volumes:
 networks:
   panscience-network:
     driver: bridge
-    name: panscience_network
+    name: panscience_network_prod
