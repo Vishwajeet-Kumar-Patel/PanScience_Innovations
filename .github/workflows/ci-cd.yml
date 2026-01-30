@@ -81,7 +81,14 @@ jobs:
           JWT_SECRET_KEY: test-secret-key
           ENVIRONMENT: test
         run: |
-          pytest --cov=app --cov-report=xml --cov-report=term-missing --cov-fail-under=70
+          pytest --cov=app --cov-report=xml --cov-report=term-missing --cov-report=html --cov-fail-under=95
+
+      - name: Generate coverage badge
+        if: github.ref == 'refs/heads/main'
+        working-directory: ./backend
+        run: |
+          pip install coverage-badge
+          coverage-badge -o coverage.svg -f
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
