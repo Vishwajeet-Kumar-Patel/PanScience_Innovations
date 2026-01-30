@@ -54,11 +54,11 @@ class TestChunkingService:
     @pytest.mark.asyncio
     async def test_generate_embedding(self):
         """Test embedding generation."""
-        # This requires valid OpenAI API key
-        # Skip in CI/CD if no API key
+        # Skip test in CI/CD environment
         import os
-        if not os.getenv('OPENAI_API_KEY'):
-            pytest.skip("OpenAI API key not available")
+        api_key = os.getenv('OPENAI_API_KEY', '')
+        if not api_key or api_key.startswith('sk-test'):
+            pytest.skip("Real OpenAI API key not available")
         
         text = "This is a test sentence for embedding."
         embedding = await chunking_service.generate_embedding(text)
